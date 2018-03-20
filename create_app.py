@@ -21,7 +21,6 @@ define("debug", default=True, help="run in debug mode")
 
 def main():
     parse_command_line()
-
     AsyncIOMainLoop().install()
     app = web.Application(
         chain(user_api_map, song_api_map, playlist_api_map, album_api_map, artist_api_map),

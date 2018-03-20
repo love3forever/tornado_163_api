@@ -4,7 +4,6 @@
 # @Author  : wangmengcn (eclipse_sv@163.com)
 # @Site    : https://eclipsesv.com
 
-from datetime import datetime
 import json
 from bs4 import BeautifulSoup
 
@@ -14,6 +13,15 @@ from .post_data_map import (get_playlist_comments_param, follow_and_fans_data, g
 from .encrypter import encrypted_request
 from data_collector import url_map
 import asyncio
+from functools import wraps
+
+
+def convert_asyncio_future(func):
+    @wraps(func)
+    async def inner_func(*args, **kwargs):
+        return await asyncio.ensure_future(func(*args, **kwargs))
+
+    return inner_func
 
 
 def mapper_index_recommend_list(data):
@@ -40,6 +48,7 @@ def mapper_index_recommend_list(data):
         return None
 
 
+@convert_asyncio_future
 async def parse_index_data():
     # 获取首页信息
     index_data = await get(url_map.index_url, content_type='text')
@@ -146,6 +155,7 @@ async def parse_index_data():
     return index_response
 
 
+@convert_asyncio_future
 async def parse_playlist_data(playlist_id=None):
     # 获取歌单数据
     url = url_map.playlist_detail_url.format(playlist_id)
@@ -153,6 +163,7 @@ async def parse_playlist_data(playlist_id=None):
     return playlist_data
 
 
+@convert_asyncio_future
 async def parse_playlist_comment(playlist_id=None, page=1):
     # 获取歌单评论
     url = url_map.playlist_comments_url.format(playlist_id)
@@ -164,6 +175,7 @@ async def parse_playlist_comment(playlist_id=None, page=1):
     return playlist_comments_data
 
 
+@convert_asyncio_future
 async def parse_song_detail(song_id=None):
     # 获取歌曲详情
     url = url_map.song_detail_url.format(song_id)
@@ -171,6 +183,7 @@ async def parse_song_detail(song_id=None):
     return json.loads(song_data)
 
 
+@convert_asyncio_future
 async def parse_song_comments(song_id, page=1):
     # 获取歌曲评论数据
     url = url_map.song_comments_url.format(song_id, song_id, 20 * (page - 1))
@@ -188,6 +201,7 @@ def convert_lyric(lyric):
         return None
 
 
+@convert_asyncio_future
 async def parse_lyric_data(song_id):
     # 获取歌词数据
     url = url_map.song_lyric_url.format(song_id)
@@ -215,6 +229,7 @@ async def parse_lyric_data(song_id):
         return None
 
 
+@convert_asyncio_future
 async def parse_user_follows(user_id, page=1):
     # 获取用户关注数据
     url = url_map.user_follows_url.format(user_id)
@@ -227,6 +242,7 @@ async def parse_user_follows(user_id, page=1):
     return json.loads(user_follows_data)
 
 
+@convert_asyncio_future
 async def parse_user_followed(user_id, page=1):
     # 获取用户粉丝数据
     url = url_map.user_fans_url.format(user_id)
@@ -236,9 +252,16 @@ async def parse_user_followed(user_id, page=1):
     post_data['offset'] = (page - 1) * post_data['limit']
     encrtyed_param = encrypted_request(json.dumps(post_data))
     user_followed_data = await post(url, data=encrtyed_param, content_type='text')
-    return json.loads(user_followed_data)
+    user_followed_data = json.loads(user_followed_data)
+    result = {
+        'user': user_id,
+        'follows': user_followed_data['followeds'],
+        'code': 200
+    }
+    return result
 
 
+@convert_asyncio_future
 async def parse_user_playlist(user_id, page=1):
     # 获取用户歌单
     post_data = get_user_playlist_param(user_id)
@@ -265,12 +288,18 @@ async def parse_user_playlist(user_id, page=1):
                     creator = playlist['creator']['nickname']
             else:
                 user_playlist_result['other'].append(convert_data)
-
-        return user_playlist_result, creator
+        result = {
+            'user': user_id,
+            'nickname': creator,
+            'playlist': user_playlist_result,
+            'code': 200
+        }
+        return result
     else:
         return None
 
 
+@convert_asyncio_future
 async def parse_user_index_page(user_id):
     # 解析用户首页数据
     index_url = url_map.user_index_url.format(user_id)
@@ -328,11 +357,17 @@ async def parse_user_index_page(user_id):
             for item in index_networks.select('li > a'):
                 index_social_networks.setdefault(item['title'], item['href'])
             index_data.setdefault('social_networks', index_social_networks)
-        return index_data
+        result = {
+            'user': user_id,
+            'code': 200,
+            'detail': index_data
+        }
+        return result
     else:
         return None
 
 
+@convert_asyncio_future
 async def parse_artist_index_page(artist_id):
     # 获取歌手首页数据
     index_url = url_map.artist_index_url.format(artist_id)
@@ -359,6 +394,7 @@ async def parse_artist_index_page(artist_id):
         return None
 
 
+@convert_asyncio_future
 async def parse_artist_album(artist_id):
     # 获取歌手相关专辑
     album_url = url_map.artist_album_url.format(artist_id)
@@ -380,11 +416,17 @@ async def parse_artist_album(artist_id):
                 'id': album_id
             }
             album_result.append(album_info)
-        return album_result
+        result = {
+            'artistId': artist_id,
+            'albums': album_result,
+            'code': 200
+        }
+        return result
     else:
         return None
 
 
+@convert_asyncio_future
 async def parse_album_detail(album_id):
     # 获取专辑信息
     album_url = url_map.album_detail_url.format(album_id)
@@ -422,6 +464,7 @@ async def parse_album_detail(album_id):
         return None
 
 
+@convert_asyncio_future
 async def parse_album_comments(album_id, page=1):
     # 获取专辑评论信息
     url = url_map.album_comments_url.format(album_id)

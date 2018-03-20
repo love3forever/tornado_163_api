@@ -8,29 +8,14 @@ import asyncio
 from tornado import web
 
 from data_collector.data_parser import (parse_playlist_comment, parse_playlist_data)
+from api.helper import common_parse
 
 
 class PlayelistDetailHandler(web.RequestHandler):
     async def get(self, playlist_id):
-        try:
-            playlist_data = await asyncio.ensure_future(parse_playlist_data(playlist_id))
-        except:
-            self.send_error()
-        else:
-            if not playlist_data:
-                self.send_error(status_code=404)
-            response = playlist_data
-            self.write(response)
+        await common_parse(self,parse_playlist_data,playlist_id)
 
 
 class PlaylistCommentsHandler(web.RequestHandler):
     async def get(self, playlist_id, page=1):
-        try:
-            playlist_comments_data = await asyncio.ensure_future(parse_playlist_comment(playlist_id, page=int(page)))
-        except:
-            self.send_error()
-        else:
-            if not playlist_comments_data:
-                self.send_error(status_code=404)
-            response = playlist_comments_data
-            self.write(response)
+        await common_parse(self,parse_playlist_comment,playlist_id, page=int(page))
