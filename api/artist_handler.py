@@ -5,17 +5,15 @@
 # @Site    : https://eclipsesv.com
 
 import asyncio
-from tornado import web
-
+from api.helper import RequestHandler
 from data_collector.data_parser import (parse_artist_album, parse_artist_index_page)
-from api.helper import common_parse
 
 
-class ArtistDetailHandler(web.RequestHandler):
+class ArtistDetailHandler(RequestHandler):
     async def get(self, artist_id):
-        await common_parse(self,parse_artist_index_page,artist_id)
+        await self.make_response(parse_artist_index_page, artist_id)
 
 
-class ArtistAlbumHandler(web.RequestHandler):
+class ArtistAlbumHandler(RequestHandler):
     async def get(self, artist_id):
-        await common_parse(self,parse_artist_album,artist_id)
+        await self.make_response(parse_artist_album, artist_id)

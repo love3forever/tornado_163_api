@@ -5,9 +5,9 @@
 # @Site    : https://eclipsesv.com
 
 import os
-import json
+from time import time
+from functools import wraps
 import base64
-import binascii
 import codecs
 from functools import lru_cache
 
@@ -17,6 +17,16 @@ modulus = '00e0b509f6259df8642dbc35662901477df22677ec152b5ff68ace615bb7b725152b3
 nonce = '0CoJUm6Qyw8W8jud'
 pubKey = '010001'
 
+def time_profile(func):
+    @wraps(func)
+    def inner_func(*args,**kwargs):
+        print('encrypte started')
+        start = time()
+        result = func(*args,**kwargs)
+        end = time()
+        print('encrypting costs:{}'.format(end-start))
+        return result
+    return inner_func
 
 def createSecretKey(size):
     return (''.join(map(lambda xx: hex(xx)[2:],
@@ -41,7 +51,8 @@ def rsaEncrypt(text, pubKey, modulus):
     return format(rs, 'x').zfill(256)
 
 
-@lru_cache()
+# @lru_cache()
+@time_profile
 def encrypted_request(text):
     secKey = createSecretKey(16)
     encText = aesEncrypt(aesEncrypt(text, nonce), secKey)

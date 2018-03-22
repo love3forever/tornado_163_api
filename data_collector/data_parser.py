@@ -239,7 +239,9 @@ async def parse_user_follows(user_id, page=1):
     post_data['offset'] = (page - 1) * post_data['limit']
     encrtyed_param = encrypted_request(json.dumps(post_data))
     user_follows_data = await post(url, data=encrtyed_param, content_type='text')
-    return json.loads(user_follows_data)
+    if user_follows_data:
+        return json.loads(user_follows_data)
+    return None
 
 
 @convert_asyncio_future
@@ -252,13 +254,15 @@ async def parse_user_followed(user_id, page=1):
     post_data['offset'] = (page - 1) * post_data['limit']
     encrtyed_param = encrypted_request(json.dumps(post_data))
     user_followed_data = await post(url, data=encrtyed_param, content_type='text')
-    user_followed_data = json.loads(user_followed_data)
-    result = {
-        'user': user_id,
-        'follows': user_followed_data['followeds'],
-        'code': 200
-    }
-    return result
+    if user_followed_data:
+        user_followed_data = json.loads(user_followed_data)
+        result = {
+            'user': user_id,
+            'follows': user_followed_data['followeds'],
+            'code': 200
+        }
+        return result
+    return None
 
 
 @convert_asyncio_future

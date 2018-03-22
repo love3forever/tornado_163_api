@@ -4,28 +4,27 @@
 # @Author  : wangmengcn (eclipse_sv@163.com)
 # @Site    : https://eclipsesv.com
 import asyncio
-from tornado import web
 
 from data_collector.data_parser import (parse_user_index_page, parse_user_playlist, parse_user_followed,
                                         parse_user_follows)
-from api.helper import common_parse
+from api.helper import RequestHandler
 
 
-class UserIndexHandler(web.RequestHandler):
+class UserIndexHandler(RequestHandler):
     async def get(self, user_id):
-        await common_parse(self, parse_user_index_page, user_id)
+        await self.make_response(parse_user_index_page, user_id)
 
 
-class UserFollowsHandler(web.RequestHandler):
+class UserFollowsHandler(RequestHandler):
     async def get(self, user_id, page=1):
-        await common_parse(self, parse_user_follows, user_id, page=int(page))
+        await self.make_response(parse_user_follows, user_id, page=int(page))
 
 
-class UserFollowedHandler(web.RequestHandler):
+class UserFollowedHandler(RequestHandler):
     async def get(self, user_id, page=1):
-        await common_parse(self, parse_user_followed, user_id, page=int(page))
+        await self.make_response(parse_user_followed, user_id, page=int(page))
 
 
-class UserPlaylistHandler(web.RequestHandler):
+class UserPlaylistHandler(RequestHandler):
     async def get(self, user_id):
-        await common_parse(self, parse_user_playlist, user_id)
+        await self.make_response(parse_user_playlist, user_id)
